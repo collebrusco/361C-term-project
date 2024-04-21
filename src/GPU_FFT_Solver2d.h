@@ -4,6 +4,9 @@
 #include <flgl/logger.h>
 #include "FFT_Solver2d.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <cuComplex.h>
 #include <cuda.h>
 
 /*
@@ -23,7 +26,9 @@
 
 class GPU_FFT_Solver2d : public FFT_Solver2d {
 private:
-	// TODO add members
+	float* d_in;
+	cuFloatComplex* d_complex_in;
+	float* buffer_temp;
 public:
 	GPU_FFT_Solver2d(size_t n, float* buff);
 	virtual ~GPU_FFT_Solver2d();
