@@ -1,4 +1,5 @@
 #include "GPU_FFT_Solver2d.h"
+#include <Stopwatch.h>
 LOG_MODULE(gpufft);
 
 #define PI 3.14159265358979323846
@@ -6,6 +7,7 @@ LOG_MODULE(gpufft);
 #define TYPE_REAL float
 #define TYPE_COMPLEX cuFloatComplex
 
+static Stopwatch timer(MICROSECONDS);
 
 __global__ void fft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
   int tid  = threadIdx.x;
@@ -110,7 +112,7 @@ GPU_FFT_Solver2d::~GPU_FFT_Solver2d() {
 void GPU_FFT_Solver2d::forward() {
     const unsigned int threads = N;
     const unsigned int blocks = 1;
-
+    
     //fft on every row
     for(int i = 0; i < N; i++) {
       // transfer the input array to the GPU
