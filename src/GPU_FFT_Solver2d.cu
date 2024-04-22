@@ -502,7 +502,7 @@ __global__ void placeidx(float* buffer, int n) {
     outmat(#name, b, i);\
 }\
 
-#define blocks 64
+#define blocks 256
 static void forward(cuda_buffer<float>& din, cuda_buffer<cuFloatComplex>& dcin, size_t n) {
     const unsigned int threads = n;
 
@@ -525,29 +525,31 @@ int main() {
 
     // obs(16, src/io/t16i.txt);
     // obs(32, src/io/t32i.txt);
-    obs(64, src/io/t64i.txt);
+    obs(256, src/io/t256i.txt);
 
-    sinmat("src/io/sm64.txt", 64);
+    sinmat("src/io/sm256.txt", 256);
 
-    cuda_buffer<float> din; din.malloc(64*64*2);
-    cuda_buffer<cuFloatComplex> dcin; dcin.malloc(64*64*2);
+    cuda_buffer<float> din; din.malloc(256*256*2);
+    cuda_buffer<cuFloatComplex> dcin; dcin.malloc(256*256);
 
-    filematrix in("src/io/t64i.txt", 64);
+    filematrix in("src/io/t256i.txt", 256);
 
     din.togpu(in.buffer);
 
-    forward(din, dcin, 64);
-    inverse(din, dcin, 64);
+    forward(din, dcin, 256);
+    inverse(din, dcin, 256);
 
-    float b[64*64*2];
+    float *b = new float[256*256*2];
     din.tocpu(b);
 
-    outmat("src/io/f64.txt", b, 64);
+    outmat("src/io/f256.txt", b, 256);
 
-    filematrix c1("src/io/f64.txt", 64);
-    filematrix c2("src/io/t64i.txt", 64);
+    filematrix c1("src/io/f256.txt", 256);
+    filematrix c2("src/io/t256i.txt", 256);
 
-    matdiff(c1.buffer, c2.buffer, 64);
+    matdiff(c1.buffer, c2.buffer, 256);
+
+    delete [] b;
 
 	return 0;
 }
