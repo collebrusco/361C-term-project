@@ -7,8 +7,10 @@
 #include "Seq_FFT_Solver2d.h"
 LOG_MODULE(testmain);
 using namespace glm;
+using namespace std;
+#include <fstream>
 
-#define N (32)
+#define N (64)
 
 static SolverToy toy(N);
 
@@ -38,7 +40,7 @@ void upd(float dt) {
 	// }
 }
 
-int main() {
+int mainsol() {
 
 	glconfig.set_flgl_path("fluid-solver-toy/lib/flgl/");
 	glconfig.set_shader_path("fluid-solver-toy/shaders/");
