@@ -397,7 +397,7 @@ void outmat(string filename, float* matrix, size_t n) {
     }
 
     outFile.close();
-    LOG_DBG("Matrix output to %s", filename);
+    LOG_DBG("Matrix output to %s", filename.c_str());
 }
 
 void outbasic(const char* filename, size_t n) {
@@ -493,17 +493,17 @@ __global__ void placeidx(float* buffer, int n) {
 
 #define obs(i, name) \
 {\
-    float b[i*i*2];\
+    float *b = new float[i*i*2];\
     \
     cuda_buffer<float> ids; ids.malloc(i*i*2); ids.clear();\
     placeidx<<<i,i>>>(ids.pt, i);\
     memset(b,0,i*i*2*sizeof(float));\
     ids.tocpu(b);\
-    outmat(#name, b, i);\
+    outmat(#name, b, i); delete [] b;\
 }\
 
-#define blocks 256
 static void forward(cuda_buffer<float>& din, cuda_buffer<cuFloatComplex>& dcin, size_t n) {
+    const unsigned int blocks = n;
     const unsigned int threads = n;
 
     fft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
@@ -513,6 +513,7 @@ static void forward(cuda_buffer<float>& din, cuda_buffer<cuFloatComplex>& dcin, 
 }
 
 static void inverse(cuda_buffer<float>& din, cuda_buffer<cuFloatComplex>& dcin, size_t n) {
+    const unsigned int blocks = n;
     const unsigned int threads = n;
 
     invfft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
@@ -525,29 +526,29 @@ int main() {
 
     // obs(16, src/io/t16i.txt);
     // obs(32, src/io/t32i.txt);
-    obs(256, src/io/t256i.txt);
+    obs(1024, src/io/t1024i.txt);
 
-    sinmat("src/io/sm256.txt", 256);
+    sinmat("src/io/sm1024.txt", 1024);
 
-    cuda_buffer<float> din; din.malloc(256*256*2);
-    cuda_buffer<cuFloatComplex> dcin; dcin.malloc(256*256);
+    cuda_buffer<float> din; din.malloc(1024*1024*2);
+    cuda_buffer<cuFloatComplex> dcin; dcin.malloc(1024*1024);
 
-    filematrix in("src/io/t256i.txt", 256);
+    filematrix in("src/io/t1024i.txt", 1024);
 
     din.togpu(in.buffer);
 
-    forward(din, dcin, 256);
-    inverse(din, dcin, 256);
+    forward(din, dcin, 1024);
+    inverse(din, dcin, 1024);
 
-    float *b = new float[256*256*2];
+    float *b = new float[1024*1024*2];
     din.tocpu(b);
 
-    outmat("src/io/f256.txt", b, 256);
+    outmat("src/io/f1024.txt", b, 1024);
 
-    filematrix c1("src/io/f256.txt", 256);
-    filematrix c2("src/io/t256i.txt", 256);
+    filematrix c1("src/io/f1024.txt", 1024);
+    filematrix c2("src/io/t1024i.txt", 1024);
 
-    matdiff(c1.buffer, c2.buffer, 256);
+    matdiff(c1.buffer, c2.buffer, 1024);
 
     delete [] b;
 
