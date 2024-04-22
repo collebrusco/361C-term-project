@@ -282,78 +282,29 @@ __global__ void oinvfft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
 #define ARRAY_BYTES (sizeof(float) * N * 2)
 
 GPU_FFT_Solver2d::GPU_FFT_Solver2d(size_t n, float* buff) : FFT_Solver2d(n, buff) {
-    cudaMalloc((void **) &d_in, ARRAY_BYTES);
-    cudaMalloc((void **) &d_complex_in, N * sizeof(TYPE_COMPLEX));
-	  buffer_temp = (float*)malloc(N*N*2*sizeof(float));
+    din.malloc(N*N*2); dcin.malloc(N*N);
 }
 
 GPU_FFT_Solver2d::~GPU_FFT_Solver2d() {
-	cudaFree(d_in); cudaFree(d_complex_in);
-	free(buffer_temp);
 }
 
 void GPU_FFT_Solver2d::forward() {
-    const unsigned int threads = N;
-    const unsigned int blocks = 1;
-
-    //fft on every row
-    for(int i = 0; i < N; i++) {
-      // transfer the input array to the GPU
-      cudaMemcpy(d_in, &buffer[2*i*N], ARRAY_BYTES, cudaMemcpyHostToDevice);
-      //kernel call --> row fft
-      fft<<<blocks, threads>>>(d_in, d_complex_in, threads);
-      // copy back the result array to the CPU
-      cudaMemcpy(&buffer_temp[2*i*N], d_in, ARRAY_BYTES, cudaMemcpyDeviceToHost);
-    }
-    //fft on every col
-    for(int i = 0; i < N; i++) {
-      //tranpose
-      for(int j = 0; j < N; j++) {
-        cudaMemcpy(&d_in[2*j], &buffer_temp[2*(j*N + i)], sizeof(TYPE_REAL) * 2, cudaMemcpyHostToDevice);
-      }
-      //kernel call --> col fft
-      fft<<<blocks, threads>>>(d_in, d_complex_in, threads);
-      //transpose
-      for(int j = 0; j < N; j++) {
-        cudaMemcpy(&buffer[2*(j*N + i)], &d_in[2*j], sizeof(TYPE_REAL) * 2, cudaMemcpyDeviceToHost);
-      }
-    }
+    const unsigned int blocks = N, threads = N;
+    din.togpu(this->buffer);
+    fft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
+    cfft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
+    din.tocpu(this->buffer);
 }
 
 void GPU_FFT_Solver2d::inverse() {
-    const unsigned int threads = N;
-    const unsigned int blocks = 1;
-
-    //inv fft on every row
-    for(int i = 0; i < N; i++) {
-      // transfer the input array to the GPU
-      cudaMemcpy(d_in, &buffer[2*i*N], ARRAY_BYTES, cudaMemcpyHostToDevice);
-
-      //kernel call --> inv fft
-      invfft<<<blocks, threads>>>(d_in, d_complex_in, threads);
-
-      // copy back the result array to the CPU
-      cudaMemcpy(&buffer_temp[2*i*N], d_in, ARRAY_BYTES, cudaMemcpyDeviceToHost);
-    }
-
-    //inv fft on every col
-    for(int i = 0; i < N; i++) {
-      //tranpose
-      for(int j = 0; j < N; j++) {
-        cudaMemcpy(&d_in[2*j], &buffer_temp[2*(j*N + i)], sizeof(TYPE_REAL) * 2, cudaMemcpyHostToDevice);
-      }
-
-      //kernel call --> col fft
-      invfft<<<blocks, threads>>>(d_in, d_complex_in, threads);
-
-      //transpose
-      for(int j = 0; j < N; j++) {
-        cudaMemcpy(&buffer[2*(j*N + i)], &d_in[2*j], sizeof(TYPE_REAL) * 2, cudaMemcpyDeviceToHost);
-      }
-    }
-
+    const unsigned int blocks = N, threads = N;
+    din.togpu(this->buffer);
+    invfft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
+    cinvfft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
+    din.tocpu(this->buffer);
 }
 
+#undef cu()
 static int en = 0;
 #define cu() \
 {cudaError_t err = cudaGetLastError();en++;\
@@ -467,25 +418,6 @@ void sinmat(const char* filename, size_t n) {
 }
 
 
-template<typename T>
-class cuda_buffer {
-    T* d_ptr;
-    size_t _n;
-public:
-    T* const& pt;
-    size_t const& n;
-    cuda_buffer() : pt(d_ptr), n(_n) {d_ptr = 0;_n = 0;}
-    ~cuda_buffer() {cudaFree(d_ptr);}
-    void malloc(size_t size) {
-        if (d_ptr != 0) cudaFree(d_ptr);
-        _n = size;
-        cudaMalloc((void**)&d_ptr, n * sizeof(T)); cu();
-    }
-    void clear() {cudaMemset(d_ptr, 0, n * sizeof(T)); cu();}
-    void tocpu(T* buffer) {cudaMemcpy(buffer, d_ptr, n * sizeof(T), cudaMemcpyDeviceToHost); cu();}
-    void togpu(T* buffer) {cudaMemcpy(d_ptr, buffer, n * sizeof(T), cudaMemcpyHostToDevice); cu();}
-};
-
 __global__ void placeidx(float* buffer, int n) {
     int i = threadIdx.x + blockDim.x * blockIdx.x;
     buffer[(2*i)] = (float)blockIdx.x; buffer[(2*i)+1] = (float)threadIdx.x;
@@ -522,7 +454,7 @@ static void inverse(cuda_buffer<float>& din, cuda_buffer<cuFloatComplex>& dcin, 
 }
 
 
-int main() {
+int tmain() {
 
     // obs(16, src/io/t16i.txt);
     // obs(32, src/io/t32i.txt);

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <cuComplex.h>
 #include <cuda.h>
+#include <cuda_runtime.h>
 
 /*
 	the FFTs should be performed in place
@@ -23,12 +24,31 @@
 		const size_t N;
 		float* const buffer;
 */
+#define cu() 
+template<typename T>
+class cuda_buffer {
+    T* d_ptr;
+    size_t _n;
+public:
+    T* const& pt;
+    size_t const& n;
+    cuda_buffer() : pt(d_ptr), n(_n) {d_ptr = 0;_n = 0;}
+    ~cuda_buffer() {cudaFree(d_ptr);}
+    void malloc(size_t size) {
+        if (d_ptr != 0) cudaFree(d_ptr);
+        _n = size;
+        cudaMalloc((void**)&d_ptr, n * sizeof(T)); cu();
+    }
+    void clear() {cudaMemset(d_ptr, 0, n * sizeof(T)); cu();}
+    void tocpu(T* buffer) {cudaMemcpy(buffer, d_ptr, n * sizeof(T), cudaMemcpyDeviceToHost); cu();}
+    void togpu(T* buffer) {cudaMemcpy(d_ptr, buffer, n * sizeof(T), cudaMemcpyHostToDevice); cu();}
+};
+
 
 class GPU_FFT_Solver2d : public FFT_Solver2d {
 private:
-	float* d_in;
-	cuFloatComplex* d_complex_in;
-	float* buffer_temp;
+	cuda_buffer<float> din;
+	cuda_buffer<cuFloatComplex> dcin;
 public:
 	GPU_FFT_Solver2d(size_t n, float* buff);
 	virtual ~GPU_FFT_Solver2d();

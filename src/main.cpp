@@ -40,7 +40,7 @@ void upd(float dt) {
 	// }
 }
 
-int mainsol() {
+int main() {
 
 	glconfig.set_flgl_path("fluid-solver-toy/lib/flgl/");
 	glconfig.set_shader_path("fluid-solver-toy/shaders/");
