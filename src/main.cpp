@@ -10,7 +10,7 @@ using namespace glm;
 using namespace std;
 #include <fstream>
 
-#define N (256)
+#define N (512)
 
 static SolverToy toy(N);
 

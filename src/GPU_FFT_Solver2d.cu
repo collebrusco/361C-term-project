@@ -9,49 +9,6 @@ LOG_MODULE(gpufft);
 
 static Stopwatch timer(MICROSECONDS);
 
-__global__ void offt(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
-  int tid  = threadIdx.x;
-
-  int revIndex = 0;
-  int tempTid = tid;
-  for(int i = 1; i < size; i <<= 1) {
-    revIndex <<= 1;
-    if(tempTid & 1) {
-        revIndex |= 1;
-    }
-    tempTid >>= 1;
-  }
-  TYPE_COMPLEX val = make_cuFloatComplex((TYPE_REAL)d_in[2*(revIndex)], (TYPE_REAL)d_in[2*(revIndex) + 1]);
-  __syncthreads();
-	d_complex_in[tid] = val;
-  __syncthreads();
-
-  //n = # of elements being merged
-  //s = step size
-  for(int n = 2, s = 1; n <= size; n <<= 1, s <<= 1) {
-      int idxInGroup = tid % n;
-      //calculate twiddle
-      int k = (idxInGroup < s) ? idxInGroup : idxInGroup - s;
-      TYPE_REAL angle = -2.0 * PI * k / n;
-      TYPE_COMPLEX twiddle = make_cuFloatComplex(cos(angle), sin(angle));
-      TYPE_COMPLEX val;
-      //split group into half
-      //even
-      if(idxInGroup < s) {
-          val = cuCaddf(d_complex_in[tid], cuCmulf(twiddle, d_complex_in[tid + s]));
-      }
-      //odd
-      else {
-          val = cuCsubf(d_complex_in[tid - s], cuCmulf(twiddle, d_complex_in[tid]));
-      }
-      __syncthreads();
-      d_complex_in[tid] = val;
-      __syncthreads();
-  }
-  d_in[2*(tid)] = cuCrealf(d_complex_in[tid]);
-  d_in[2*(tid) + 1] = cuCimagf(d_complex_in[tid]);
-}
-
 __global__ void fft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
   int tid  = threadIdx.x;
 
@@ -61,9 +18,7 @@ __global__ void fft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
   int tempTid = tid;
   for(int i = 1; i < size; i <<= 1) {
     revIndex <<= 1;
-    if(tempTid & 1) {
-        revIndex |= 1;
-    }
+    revIndex |= (tempTid & 1);
     tempTid >>= 1;
   }
   TYPE_COMPLEX val = make_cuFloatComplex((TYPE_REAL)d_in[2*(base+revIndex)], (TYPE_REAL)d_in[2*(base+revIndex) + 1]);
@@ -107,9 +62,7 @@ __global__ void invfft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
   int tempTid = tid;
   for(int i = 1; i < size; i <<= 1) {
     revIndex <<= 1;
-    if(tempTid & 1) {
-        revIndex |= 1;
-    }
+    revIndex |= (tempTid & 1);
     tempTid >>= 1;
   }
   TYPE_COMPLEX val = make_cuFloatComplex((TYPE_REAL)d_in[2*(base+revIndex)], (TYPE_REAL)d_in[2*(base+revIndex) + 1]);
@@ -155,9 +108,7 @@ __global__ void cfft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
   int tempTid = tid;
   for(int i = 1; i < size; i <<= 1) {
     revIndex <<= 1;
-    if(tempTid & 1) {
-        revIndex |= 1;
-    }
+    revIndex |= (tempTid & 1);
     tempTid >>= 1;
   }
   TYPE_COMPLEX val = make_cuFloatComplex((TYPE_REAL)d_in[2*(base+(mul*revIndex))], (TYPE_REAL)d_in[2*(base+(mul*revIndex)) + 1]);
@@ -202,9 +153,7 @@ __global__ void cinvfft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
   int tempTid = tid;
   for(int i = 1; i < size; i <<= 1) {
     revIndex <<= 1;
-    if(tempTid & 1) {
-        revIndex |= 1;
-    }
+    revIndex |= (tempTid & 1);
     tempTid >>= 1;
   }
   TYPE_COMPLEX val = make_cuFloatComplex((TYPE_REAL)d_in[2*(base+(mul*revIndex))], (TYPE_REAL)d_in[2*(base+(mul*revIndex)) + 1]);
@@ -238,49 +187,6 @@ __global__ void cinvfft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
   }
   d_in[2*(base+(mul*tid))] = cuCrealf(d_complex_in[(base+(mul*tid))]);
   d_in[2*(base+(mul*tid)) + 1] = cuCimagf(d_complex_in[(base+(mul*tid))]);
-}
-
-__global__ void oinvfft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
-  int tid  = threadIdx.x;
-
-  int revIndex = 0;
-  int tempTid = tid;
-  for(int i = 1; i < size; i <<= 1) {
-    revIndex <<= 1;
-    if(tempTid & 1) {
-        revIndex |= 1;
-    }
-    tempTid >>= 1;
-  }
-  TYPE_COMPLEX val = make_cuFloatComplex((TYPE_REAL)d_in[2*revIndex], (TYPE_REAL)d_in[2*revIndex + 1]);
-  __syncthreads();
-	d_complex_in[tid] = val;
-  __syncthreads();
-
-  //n = # of elements being merged
-  //s = step size
-  for(int n = 2, s = 1; n <= size; n <<= 1, s <<= 1) {
-      int idxInGroup = tid % n;
-      //calculate twiddle
-      int k = (idxInGroup < s) ? idxInGroup : idxInGroup - s;
-      TYPE_REAL angle = 2.0 * PI * k / n;
-      TYPE_COMPLEX twiddle = make_cuFloatComplex(cos(angle), sin(angle));
-      TYPE_COMPLEX val;
-      //split group into half
-      //even
-      if(idxInGroup < s) {
-          val = cuCdivf(cuCaddf(d_complex_in[tid], cuCmulf(twiddle, d_complex_in[tid + s])), make_cuFloatComplex(2.0, 0.0));
-      }
-      //odd
-      else {
-          val = cuCdivf(cuCsubf(d_complex_in[tid - s], cuCmulf(twiddle, d_complex_in[tid])), make_cuFloatComplex(2.0, 0.0));
-      }
-      __syncthreads();
-      d_complex_in[tid] = val;
-      __syncthreads();
-  }
-  d_in[2*tid] = cuCrealf(d_complex_in[tid]);
-  d_in[2*tid + 1] = cuCimagf(d_complex_in[tid]);
 }
 
 #define ARRAY_BYTES (sizeof(float) * N * 2)
