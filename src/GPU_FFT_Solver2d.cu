@@ -129,11 +129,13 @@ __global__ void invfft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
       //split group into half
       //even
       if(idxInGroup < s) {
-          val = cuCdivf(cuCaddf(d_complex_in[(base+tid)], cuCmulf(twiddle, d_complex_in[(base+tid) + s])), make_cuFloatComplex(2.0, 0.0));
+        //   val = cuCdivf(cuCaddf(d_complex_in[(base+tid)], cuCmulf(twiddle, d_complex_in[(base+tid) + s])), make_cuFloatComplex(2.0, 0.0));
+          val = cuCaddf(d_complex_in[(base+tid)], cuCmulf(twiddle, d_complex_in[(base+tid) + s]));
       }
       //odd
       else {
-          val = cuCdivf(cuCsubf(d_complex_in[(base+tid) - s], cuCmulf(twiddle, d_complex_in[(base+tid)])), make_cuFloatComplex(2.0, 0.0));
+        //   val = cuCdivf(cuCsubf(d_complex_in[(base+tid) - s], cuCmulf(twiddle, d_complex_in[(base+tid)])), make_cuFloatComplex(2.0, 0.0));
+          val = cuCsubf(d_complex_in[(base+tid) - s], cuCmulf(twiddle, d_complex_in[(base+tid)]));
       }
       __syncthreads();
       d_complex_in[(base+tid)] = val;
@@ -222,11 +224,13 @@ __global__ void cinvfft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
       //split group into half
       //even
       if(idxInGroup < s) {
-          val = cuCdivf(cuCaddf(d_complex_in[(base+(mul*tid))], cuCmulf(twiddle, d_complex_in[base+(mul*(tid + s))])), make_cuFloatComplex(2.0, 0.0));
+        //   val = cuCdivf(cuCaddf(d_complex_in[(base+(mul*tid))], cuCmulf(twiddle, d_complex_in[base+(mul*(tid + s))])), make_cuFloatComplex(2.0, 0.0));
+          val = cuCaddf(d_complex_in[(base+(mul*tid))], cuCmulf(twiddle, d_complex_in[base+(mul*(tid + s))]));
       }
       //odd
       else {
-          val = cuCdivf(cuCsubf(d_complex_in[base+(mul*(tid - s))], cuCmulf(twiddle, d_complex_in[(base+(mul*tid))])), make_cuFloatComplex(2.0, 0.0));
+        //   val = cuCdivf(cuCsubf(d_complex_in[base+(mul*(tid - s))], cuCmulf(twiddle, d_complex_in[(base+(mul*tid))])), make_cuFloatComplex(2.0, 0.0));
+          val = cuCsubf(d_complex_in[base+(mul*(tid - s))], cuCmulf(twiddle, d_complex_in[(base+(mul*tid))]));
       }
       __syncthreads();
       d_complex_in[(base+(mul*tid))] = val;

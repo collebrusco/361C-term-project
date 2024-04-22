@@ -10,7 +10,7 @@ using namespace glm;
 using namespace std;
 #include <fstream>
 
-#define N (64)
+#define N (256)
 
 static SolverToy toy(N);
 
@@ -20,24 +20,24 @@ static Seq_FFT_Solver2d* seq_fft;
 static FFTW_FFT_Solver2d* fftw_fft;
 
 void upd(float dt) {
-	// (void)dt;
-	// if (window.keyboard[GLFW_KEY_L].pressed) {
-	// 	solver++;
-	// 	switch (solver%3) {
-	// 	case 0:
-	// 		LOG_DBG("SWITCHING SOLVER TO: FFTW");
-	// 		toy.set_fft_type(fftw_fft);
-	// 		break;
-	// 	case 1:
-	// 		LOG_DBG("SWITCHING SOLVER TO: SEQUENTIAL");
-	// 		toy.set_fft_type(seq_fft);
-	// 		break;
-	// 	case 2:
-	// 		LOG_DBG("SWITCHING SOLVER TO: GPU");
-	// 		toy.set_fft_type(gpu_fft);
-	// 		break;
-	// 	}
-	// }
+	(void)dt;
+	if (window.keyboard[GLFW_KEY_L].pressed) {
+		switch (solver&1) {
+		case 0:
+			LOG_DBG("SWITCHING SOLVER TO: FFTW");
+			toy.set_fft_type(fftw_fft);
+			break;
+		case 1:
+		// 	LOG_DBG("SWITCHING SOLVER TO: SEQUENTIAL");
+		// 	toy.set_fft_type(seq_fft);
+		// 	break;
+		// case 2:
+			LOG_DBG("SWITCHING SOLVER TO: GPU");
+			toy.set_fft_type(gpu_fft);
+			break;
+		}
+		solver++;
+	}
 }
 
 int main() {
