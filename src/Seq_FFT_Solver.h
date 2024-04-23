@@ -20,20 +20,20 @@
 */
 
 class Seq_FFT_Solver1d : public FFT_Solver {
-private:
+protected:
 	void fft(float* x, const size_t n);
 	void ifft(float* x, const size_t n);
 public:
 	Seq_FFT_Solver1d(size_t n, float* buff);
 	virtual ~Seq_FFT_Solver1d();
 
-	virtual void forward() override final;
-	virtual void inverse() override final;
+	virtual void forward() override;
+	virtual void inverse() override;
 };
 
-class Seq_FFT_Solver2d : public FFT_Solver {
+class Seq_FFT_Solver2d : public Seq_FFT_Solver1d {
 private:
-	// TODO add members
+	float* tbuff;
 public:
 	Seq_FFT_Solver2d(size_t n, float* buff);
 	virtual ~Seq_FFT_Solver2d();

@@ -69,11 +69,9 @@ void Seq_FFT_Solver1d::ifft(float* x, const size_t n) {
 }
 
 Seq_FFT_Solver1d::Seq_FFT_Solver1d(size_t n, float* buff) : FFT_Solver(n, buff) {
-	// TODO constructor
 }
 
 Seq_FFT_Solver1d::~Seq_FFT_Solver1d() {
-	// TODO destructor
 }
 
 void Seq_FFT_Solver1d::forward() {
@@ -86,39 +84,109 @@ void Seq_FFT_Solver1d::inverse() {
 
 
 
-Seq_FFT_Solver2d::Seq_FFT_Solver2d(size_t n, float* buff) : FFT_Solver(n, buff) {
-	// TODO constructor
+Seq_FFT_Solver2d::Seq_FFT_Solver2d(size_t n, float* buff) : Seq_FFT_Solver1d(n, buff) {
+    tbuff = new float[n*2];
 }
 
 Seq_FFT_Solver2d::~Seq_FFT_Solver2d() {
-	// TODO destructor
+    delete [] tbuff;
 }
 
 void Seq_FFT_Solver2d::forward() {
-	// TODO fwd
+    for (int row = 0; row < N; row++) {
+        float* base = buffer + (row*N*2);
+        memcpy(tbuff, base, N*2*sizeof(float));
+        fft(tbuff, N);
+        memcpy(base, tbuff, N*2*sizeof(float));
+    }
+    for (int col = 0; col < N; col++) {
+        float* base = buffer + col*2;
+        for (int elem = 0; elem < N; elem++) {
+            tbuff[2*elem]       = base[((N*2) * elem)];
+            tbuff[(2*elem)+1]   = base[((N*2) * elem)+1];
+        }
+        fft(tbuff, N);
+        for (int elem = 0; elem < N; elem++) {
+            base[((N*2) * elem)]    = tbuff[(2*elem)];
+            base[((N*2) * elem)+1]  = tbuff[(2*elem)+1];
+        }
+    }
 }
 
 void Seq_FFT_Solver2d::inverse() {
-	// TODO inv
+    for (int row = 0; row < N; row++) {
+        float* base = buffer + (row*N*2);
+        memcpy(tbuff, base, N*2*sizeof(float));
+        ifft(tbuff, N);
+        memcpy(base, tbuff, N*2*sizeof(float));
+    }
+    for (int col = 0; col < N; col++) {
+        float* base = buffer + col*2;
+        for (int elem = 0; elem < N; elem++) {
+            tbuff[2*elem]       = base[((N*2) * elem)];
+            tbuff[(2*elem)+1]   = base[((N*2) * elem)+1];
+        }
+        ifft(tbuff, N);
+        for (int elem = 0; elem < N; elem++) {
+            base[((N*2) * elem)]    = tbuff[(2*elem)];
+            base[((N*2) * elem)+1]  = tbuff[(2*elem)+1];
+        }
+    }
 }
 
-#define outarr() for (int i = 0; i < 16; i++) cout << arr[i] << " "; cout << "\n";
-#include <iostream>
-using namespace std;
-int main() {
+// #define SIZE (128)
+// #define outarr(a) for (int i = 0; i < 2*SIZE; i++) cout << a[i] << " "; cout << "\n";
+// #define adiff(a,b) {float sum = 0.; for (int i = 0; i < 2*SIZE*SIZE; i++) sum += (a[i]-b[i]) * (a[i]-b[i]); LOG_DBG("adiff %e", sum/(SIZE*SIZE));}
+// #include <iostream>
+// using namespace std;
+// int main() {
 
-    float *arr = new float[16];
-    for (int i = 0; i < 16; i+=2) { arr[i] = i; arr[i + 1] = 0.; }
+//     float *arr = new float[2*SIZE*SIZE];
+//     for (int i = 0; i < 2*SIZE*SIZE; i+=2) { arr[i] = i; arr[i + 1] = 0.; }
+//     float *ref = new float[2*SIZE*SIZE];
+//     for (int i = 0; i < 2*SIZE*SIZE; i+=2) { ref[i] = i; ref[i + 1] = 0.; }
 
-    Seq_FFT_Solver1d solver(8, arr);
-    outarr();
-    solver.forward(); 
-    outarr();
-    solver.inverse();
-    for (int i = 0; i < 16; i+=2) { arr[i] /= 8.; }
-    outarr();
-    cout << "\n";
+//     Seq_FFT_Solver2d solver(SIZE, arr);
+//     // outarr(arr);
+//     solver.forward(); 
+//     // outarr(arr);
+//     solver.inverse();
+//     for (int i = 0; i < 2*SIZE*SIZE; i+=2) { arr[i] /= SIZE*SIZE; }
+//     // outarr(arr);
+//     cout << "\n";
 
-    delete [] arr;
-    return 0;
-}
+//     adiff(arr,ref);
+
+//     delete [] arr;
+//     delete [] ref;
+//     return 0;
+// }
+
+
+// #define SIZE (128)
+// #define outarr(a) for (int i = 0; i < 2*SIZE; i++) cout << a[i] << " "; cout << "\n";
+// #define adiff(a,b) {float sum = 0.; for (int i = 0; i < 2*SIZE; i++) sum += (a[i]-b[i]) * (a[i]-b[i]); LOG_DBG("adiff %e", sum/SIZE);}
+// #include <iostream>
+// using namespace std;
+// int main() {
+
+//     float *arr = new float[2*SIZE];
+//     for (int i = 0; i < 2*SIZE; i+=2) { arr[i] = i; arr[i + 1] = 0.; }
+//     float *ref = new float[2*SIZE];
+//     for (int i = 0; i < 2*SIZE; i+=2) { ref[i] = i; ref[i + 1] = 0.; }
+
+//     Seq_FFT_Solver1d solver(SIZE, arr);
+//     outarr(arr);
+//     solver.forward(); 
+//     outarr(arr);
+//     solver.inverse();
+//     for (int i = 0; i < 2*SIZE; i+=2) { arr[i] /= SIZE; }
+//     outarr(arr);
+//     cout << "\n";
+
+//     adiff(arr,ref);
+
+//     delete [] arr;
+//     delete [] ref;
+//     return 0;
+// }
