@@ -1,4 +1,4 @@
-#include "GPU_FFT_Solver2d.h"
+#include "SlowGPU_FFT_Solver2d.h"
 #include <Stopwatch.h>
 LOG_MODULE(gpufft);
 
@@ -9,7 +9,7 @@ LOG_MODULE(gpufft);
 
 static Stopwatch timer(MICROSECONDS);
 
-__global__ void fft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
+__global__ static void fft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
   int tid  = threadIdx.x;
 
   int revIndex = 0;
@@ -53,7 +53,7 @@ __global__ void fft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
 }
 
 
-__global__ void invfft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
+__global__ static void invfft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
   int tid  = threadIdx.x;
 
   int revIndex = 0;
@@ -98,18 +98,18 @@ __global__ void invfft(TYPE_REAL *d_in, TYPE_COMPLEX *d_complex_in, int size) {
 
 #define ARRAY_BYTES (sizeof(float) * N * 2)
 
-GPU_FFT_Solver2d::GPU_FFT_Solver2d(size_t n, float* buff) : FFT_Solver2d(n, buff) {
+SlowGPU_FFT_Solver2d::SlowGPU_FFT_Solver2d(size_t n, float* buff) : FFT_Solver(n, buff) {
     cudaMalloc((void **) &d_in, ARRAY_BYTES);
     cudaMalloc((void **) &d_complex_in, N * sizeof(TYPE_COMPLEX));
 	  buffer_temp = (float*)malloc(N*N*2*sizeof(float));
 }
 
-GPU_FFT_Solver2d::~GPU_FFT_Solver2d() {
+SlowGPU_FFT_Solver2d::~SlowGPU_FFT_Solver2d() {
 	cudaFree(d_in); cudaFree(d_complex_in);
 	free(buffer_temp);
 }
 
-void GPU_FFT_Solver2d::forward() {
+void SlowGPU_FFT_Solver2d::forward() {
     const unsigned int threads = N;
     const unsigned int blocks = 1;
 
@@ -137,7 +137,7 @@ void GPU_FFT_Solver2d::forward() {
     }
 }
 
-void GPU_FFT_Solver2d::inverse() {
+void SlowGPU_FFT_Solver2d::inverse() {
     const unsigned int threads = N;
     const unsigned int blocks = 1;
 

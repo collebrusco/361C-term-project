@@ -2,7 +2,7 @@
 #define GPU_FFT_SOLVER_H
 #include <flgl.h>
 #include <flgl/logger.h>
-#include "FFT_Solver2d.h"
+#include "FFT_Solver.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,14 +24,14 @@
 		float* const buffer;
 */
 
-class GPU_FFT_Solver2d : public FFT_Solver2d {
+class SlowGPU_FFT_Solver2d : public FFT_Solver {
 private:
 	float* d_in;
 	cuFloatComplex* d_complex_in;
 	float* buffer_temp;
 public:
-	GPU_FFT_Solver2d(size_t n, float* buff);
-	virtual ~GPU_FFT_Solver2d();
+	SlowGPU_FFT_Solver2d(size_t n, float* buff);
+	virtual ~SlowGPU_FFT_Solver2d();
 
 	virtual void forward() override final;
 	virtual void inverse() override final;
