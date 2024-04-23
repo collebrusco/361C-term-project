@@ -25,14 +25,14 @@ using namespace std;
 // 	if (window.keyboard[GLFW_KEY_L].pressed) {
 // 		switch (solver&1) {
 // 		case 0:
+// 			LOG_DBG("SWITCHING SOLVER TO: SEQUENTIAL");
+// 			toy.set_fft_type(seq_fft);
+// 			break;
+// 		case 1:
 // 			LOG_DBG("SWITCHING SOLVER TO: FFTW");
 // 			toy.set_fft_type(fftw_fft);
 // 			break;
-// 		case 1:
-// 		// 	LOG_DBG("SWITCHING SOLVER TO: SEQUENTIAL");
-// 		// 	toy.set_fft_type(seq_fft);
-// 		// 	break;
-// 		// case 2:
+// 		case 2:
 // 			LOG_DBG("SWITCHING SOLVER TO: GPU");
 // 			toy.set_fft_type(gpu_fft);
 // 			break;
@@ -41,12 +41,12 @@ using namespace std;
 // 	}
 // }
 
-// int solmain() {
+// int main() {
 
 // 	glconfig.set_flgl_path("fluid-solver-toy/lib/flgl/");
 // 	glconfig.set_shader_path("fluid-solver-toy/shaders/");
 
-// 	toy.set_fft_type(gpu_fft);
+// 	toy.set_fft_type(seq_fft);
 
 // 	toy.run(upd);
 
@@ -57,7 +57,7 @@ static unsigned int M = 0xF28D8B38;
 static float random() {return (float)(0x123FF941*M+0xABABEE77);}
 static Stopwatch timer(MICROSECONDS);
 
-static void test(FFT_Solver* solver, string name) {
+static void test(FFT_Solver* solver, string name, ofstream& fout) {
 	timer.stop_reset();
 	float buf[64];
 	for (int i = 0; i < 64; i++) {
@@ -73,8 +73,7 @@ static void test(FFT_Solver* solver, string name) {
 		sig += (buf[i]-mean) * (buf[i]-mean);
 	sig /= 64.;
 	sig = sqrt(sig);
-	name += ": mean %.3fus, sigma %.3fus";
-	LOG_DBG(name, mean, sig);
+	fout << name << " m " << mean << " s " << sig << "\n";
 }
 
 int main() {
@@ -88,6 +87,8 @@ int main() {
 	GPU_FFT_Solver1d * gpu1d;
 	GPU_FFT_Solver2d * gpu2d;
 
+	ofstream fout; fout.open("src/io/RESULTS.txt"); if (!fout) return -666;
+
 	for (unsigned int n = 8; n <= 1024; n <<= 1) {
 		LOG_DBG("======== n = %d ========", n);
 		float* buff = new float[n*n*2];
@@ -99,18 +100,22 @@ int main() {
 		gpu1d  = new GPU_FFT_Solver1d(n, buff);
 		gpu2d  = new GPU_FFT_Solver2d(n, buff);
 
-		test(fftw1d, "fftw1d");
+		fout << n << "\n";
+
+		test(fftw1d, "fftw1d", fout);
 		for (int i = 0; i < n*n*2; i++) buff[i] = random();
-		test(fftw2d, "fftw2d");
+		test(fftw2d, "fftw2d", fout);
 		for (int i = 0; i < n*n*2; i++) buff[i] = random();
-		test(seq1d, "seq1d");
+		test(seq1d, "seq1d", fout);
 		for (int i = 0; i < n*n*2; i++) buff[i] = random();
-		test(seq2d, "seq2d");
+		test(seq2d, "seq2d", fout);
 		for (int i = 0; i < n*n*2; i++) buff[i] = random();
-		test(gpu1d, "gpu1d");
+		test(gpu1d, "gpu1d", fout);
 		for (int i = 0; i < n*n*2; i++) buff[i] = random();
-		test(gpu2d, "gpu2d");
+		test(gpu2d, "gpu2d", fout);
 		for (int i = 0; i < n*n*2; i++) buff[i] = random();
+
+		fout << "\n";
 
 		// timer.reset_start();
 		// fftw1d->forward(); fftw1d->inverse();

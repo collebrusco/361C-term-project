@@ -117,7 +117,7 @@ void Seq_FFT_Solver2d::inverse() {
     for (int row = 0; row < N; row++) {
         float* base = buffer + (row*N*2);
         memcpy(tbuff, base, N*2*sizeof(float));
-        ifft(tbuff, N);
+        fft(tbuff, N);
         memcpy(base, tbuff, N*2*sizeof(float));
     }
     for (int col = 0; col < N; col++) {
