@@ -198,19 +198,30 @@ GPU_FFT_Solver1d::GPU_FFT_Solver1d(size_t n, float* buff) : FFT_Solver(n, buff) 
 GPU_FFT_Solver1d::~GPU_FFT_Solver1d() {
 }
 
+float GPU_FFT_Solver1d::get_last_nocpy_us() {
+    return lastt;
+}
+float GPU_FFT_Solver2d::get_last_nocpy_us() {
+    return lastt;
+}
+
 void GPU_FFT_Solver1d::forward() {
     const unsigned int blocks = 1, threads = N;
     din.togpu(this->buffer);
+    timer.reset_start();
     fft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
     cfft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
+    lastt = timer.stop(MICROSECONDS);
     din.tocpu(this->buffer);
 }
 
 void GPU_FFT_Solver1d::inverse() {
     const unsigned int blocks = 1, threads = N;
     din.togpu(this->buffer);
+    timer.reset_start();
     invfft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
     cinvfft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
+    lastt = timer.stop(MICROSECONDS);
     din.tocpu(this->buffer);
 }
 
@@ -225,16 +236,20 @@ GPU_FFT_Solver2d::~GPU_FFT_Solver2d() {
 void GPU_FFT_Solver2d::forward() {
     const unsigned int blocks = N, threads = N;
     din.togpu(this->buffer);
+    timer.reset_start();
     fft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
     cfft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
+    lastt = timer.stop(MICROSECONDS);
     din.tocpu(this->buffer);
 }
 
 void GPU_FFT_Solver2d::inverse() {
     const unsigned int blocks = N, threads = N;
     din.togpu(this->buffer);
+    timer.reset_start();
     invfft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
     cinvfft<<<blocks, threads>>>(din.pt, dcin.pt, threads);
+    lastt = timer.stop(MICROSECONDS);
     din.tocpu(this->buffer);
 }
 

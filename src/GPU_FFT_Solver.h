@@ -3,6 +3,7 @@
 #include <flgl.h>
 #include <flgl/logger.h>
 #include "FFT_Solver.h"
+#include <Stopwatch.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,9 +49,12 @@ class GPU_FFT_Solver1d : public FFT_Solver {
 private:
 	cuda_buffer<float> din;
 	cuda_buffer<cuFloatComplex> dcin;
+    float lastt;
+    Stopwatch timer;
 public:
 	GPU_FFT_Solver1d(size_t n, float* buff);
 	virtual ~GPU_FFT_Solver1d();
+    float get_last_nocpy_us();
 
 	virtual void forward() override final;
 	virtual void inverse() override final;
@@ -60,9 +64,12 @@ class GPU_FFT_Solver2d : public FFT_Solver {
 private:
 	cuda_buffer<float> din;
 	cuda_buffer<cuFloatComplex> dcin;
+    float lastt;
+    Stopwatch timer;
 public:
 	GPU_FFT_Solver2d(size_t n, float* buff);
 	virtual ~GPU_FFT_Solver2d();
+    float get_last_nocpy_us();
 
 	virtual void forward() override final;
 	virtual void inverse() override final;
