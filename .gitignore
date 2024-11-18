@@ -10,3 +10,5 @@ cmake_install.cmake
 CMakeDoxyfile.in
 CMakeDoxygenDefaults.cmake
 
+_graphs
+
