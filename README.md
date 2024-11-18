@@ -5,7 +5,7 @@
 Over 2024 Spring break, I was developing a 2D game that required a fluid simulation of the atmosphere. Researching simple fluid solvers, I came across [this 2001 paper by Jos Stam](https://www.dgp.toronto.edu/public_user/stam/reality/Research/pdf/jgt01.pdf). This solver is based around a 2D FFT which is used to low-pass the fluid vector field and force the field to be mass conserving, while a spatial domain advection technique gives the field its flow.
 
 ## The Solver
-The solver algorithm itself is found in [StamFFT_FluidSolver.cpp](./fluid-solver-toy/src/StamFFT_FluidSolver.cpp), which you can reference to see un-interrupted code. Below I show the broad strokes of the solver function. First, the input forces are simply applied to the field, shown below.
+The solver algorithm itself is found in [StamFFT_FluidSolver.cpp](https://github.com/collebrusco/fluid-solver-toy/blob/absfft/src/StamFFT_FluidSolver.cpp), which you can reference to see un-interrupted code. Below I show the broad strokes of the solver function. First, the input forces are simply applied to the field, shown below.
 ```c++
     for ( i=0 ; i<N*N ; i++ ) {
         u[i] += dt*u0[i]; u0[i] = u[i];
@@ -77,7 +77,7 @@ Here is the spatial to fourier transform. This is the CUDA call that will be dis
 ```
 ## The Renderer
 The fluid simulator is not much good if you can't observe it! Moreover, I wanted to build an interactive demo of the solver that allows the user to swirl the fluid around. For this, I've used my [graphics library](https://github.com/collebrusco/flgl) that I've been maintaining for a few years. This library is simply OpenGL, GLFW, and some other conveniences.    
-I built two renderers for the field. Both can be seen in the gif at the top of the page. The first simply places the x and y components of the vector into the red and blue color channels. This gives a surprisingly fluid like render. The renderer for this is ineffecient, but effective. I maintain a buffer of floating point x and y values, normalized to be between 0 and 1. This is buffered to the GPU every frame as a texture. The code for this (found [here](./fluid-solver-toy/src/rgFieldRenderer.cpp), using my flgl library) is below.
+I built two renderers for the field. Both can be seen in the gif at the top of the page. The first simply places the x and y components of the vector into the red and blue color channels. This gives a surprisingly fluid like render. The renderer for this is ineffecient, but effective. I maintain a buffer of floating point x and y values, normalized to be between 0 and 1. This is buffered to the GPU every frame as a texture. The code for this (found [here](https://github.com/collebrusco/fluid-solver-toy/blob/absfft/src/rgFieldRenderer.cpp), using my flgl library) is below.
 ```c++
 // upload sizeof(float)*2*n*n buffer to GPU
 field_tex.bind();
@@ -92,7 +92,7 @@ gl.draw_mesh(quad);
 field_tex.unbind();
 field_shad.unbind();
 ```
-The second renderer is the 'classic' vector field render style. The code can be found [here](./fluid-solver-toy/src/vecFieldRenderer.cpp). This is done by building a vertex buffer of lines originating from each vector pointing in their direction and scaled down by some constant. A line is only added every 4 vectors so that the final product is less messy. The CPU-side buffer is populated, sent to the GPU, and drawn every frame. This is much faster than the color renderer, though still requires high GPU bandwidth.
+The second renderer is the 'classic' vector field render style. The code can be found [here](https://github.com/collebrusco/fluid-solver-toy/blob/absfft/src/vecFieldRenderer.cpp). This is done by building a vertex buffer of lines originating from each vector pointing in their direction and scaled down by some constant. A line is only added every 4 vectors so that the final product is less messy. The CPU-side buffer is populated, sent to the GPU, and drawn every frame. This is much faster than the color renderer, though still requires high GPU bandwidth.
 ```c++
 
 // build mesh
