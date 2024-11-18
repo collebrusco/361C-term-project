@@ -37,7 +37,7 @@ Next, in preperation for the spatial -> fourier domain transform, the 2D velocit
         }
     }
 ```
-Here is the spatial to fourier transform. The FFT forward/inverse calls are the CUDA kernels that will be discussed later. It is abstracted so that a generic solver can be used (e.g. I use a library FFT to run the simulator on MacOS). After transforming to the fourier domain, a low-pass filter with a cutoff that is a function of viscosity is applied. At the same time, the fourier-domain vectors are projected to be tangent to concentric rings around the origin. The paper goes into more detail on how this removes the divergent component of the field. Afterwards, the fluid is transformed back into the spatial domain, and normalized. This is a complete step of the solver.
+Here is the use of the FFT. The FFT forward/inverse calls are the CUDA kernels that will be discussed later. They are also abstracted so that a generic solver can be used (e.g. I use a library FFT to run the simulator on MacOS). After transforming to the fourier domain, a low-pass filter with a cutoff that is a function of viscosity is applied. At the same time, the fourier-domain vectors are projected to be tangent to concentric rings around the origin. The paper goes into more detail on how this removes the divergent component of the field. Afterwards, the fluid is transformed back into the spatial domain, and normalized. This completes a step of the solver.
 ```c++
     fftu->forward(); fftv->forward();
 
@@ -64,6 +64,7 @@ Here is the spatial to fourier transform. The FFT forward/inverse calls are the 
             (&(v0[2*(i + N*j)]))[1] = vi;
         }
     }
+
     fftu->inverse(); fftv->inverse();
 
     f = 1.0/(N*N);
@@ -205,6 +206,7 @@ int mul = blockDim.x;
 __syncthreads();
 d_complex_in[(base+(mul*tid))] = val;
 __syncthreads();
+// otherwise, the solver is the same
 ```
 
 Finally, the forward call looks like this.
