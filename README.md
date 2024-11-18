@@ -1,4 +1,4 @@
-# Accelerating a simple fluid sim with 2D CUDA FFTs
+# Accelerating a Simple Fluid Sim with 2D CUDA FFTs
 ## Personal Project (Solver and Renderer) and UT ECE 361C Term Project (2D CUDA FFT)
 ![demo_gif](figs/product.gif)
      
