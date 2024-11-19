@@ -69,8 +69,7 @@ Here is the use of the FFT. The FFT forward/inverse calls are the CUDA kernels t
 
     f = 1.0/(N*N);
     for ( i=0 ; i<N ; i++ ) {
-        for ( j=0 ; j<N ; j++ )
-        { 
+        for ( j=0 ; j<N ; j++ ) { 
             u[i+N*j] = f*BUFF_R(u0, i, j); v[i+N*j] = f*BUFF_R(v0, i, j); 
         }
     }
