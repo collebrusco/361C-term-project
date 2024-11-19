@@ -76,7 +76,7 @@ Here is the use of the FFT. The FFT forward/inverse calls are the CUDA kernels t
 
 ```
 ## The Renderer
-The fluid simulator is not much good if you can't observe it! Moreover, I wanted to build an interactive demo of the solver that allows the user to swirl the fluid around. For this, I've used my [graphics library](https://github.com/collebrusco/flgl) that I've been maintaining for a few years. This library is simply OpenGL, GLFW, and some other conveniences.    
+The fluid simulator is not much good if you can't observe it! Moreover, I wanted to build an interactive demo of the solver that allows the user to swirl the fluid around. For this, I've used my [graphics library](https://github.com/collebrusco/flgl) that I've been maintaining for a few years. This library is based on OpenGL & GLFW, and includes a number of other common abstractions and tools. There is more to say about this library, but all that's relevant here is that it reads very similarly to and can be mixed with plain OpenGL.       
 I built two renderers for the field. Both can be seen in the gif at the top of the page. The first simply places the x and y components of the vector into the red and blue color channels. This gives a surprisingly fluid like render. The renderer for this is ineffecient, but effective. I maintain a buffer of floating point x and y values, normalized to be between 0 and 1. This is buffered to the GPU every frame as a texture. The code for this (found [here](https://github.com/collebrusco/fluid-solver-toy/blob/absfft/src/rgFieldRenderer.cpp), using my flgl library) is below.
 ```c++
 // upload sizeof(float)*2*n*n buffer to GPU
